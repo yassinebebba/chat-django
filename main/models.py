@@ -8,6 +8,7 @@ from django.contrib.auth.models import _user_has_module_perms
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 
+
 class UserManager(BaseUserManager):
     def create_user(self, phone_number: str, password: str):
         if not phone_number:
@@ -74,3 +75,13 @@ class User(AbstractBaseUser):
 
     def __str__(self):
         return f'{self.phone_number}'
+
+
+class OTP(models.Model):
+    class Meta:
+        db_table = 'otp'
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=False)
+    otp_code = models.IntegerField(null=False)  # 6 digits to save space with int type in the DB
+    attempts = models.IntegerField(default=0, null=False)
+    creation_date = models.DateTimeField(default=timezone.now, null=False)
