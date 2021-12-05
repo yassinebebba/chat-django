@@ -38,7 +38,7 @@ class User(AbstractBaseUser):
 
     objects = UserManager()
 
-    USERNAME_FEILD = phone_number
+    USERNAME_FIELD = phone_number
 
     def has_perm(self, perm: str, obj=None) -> bool:
         if self.is_active and self.is_admin:
