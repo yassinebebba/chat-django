@@ -7,6 +7,7 @@ from django.contrib.auth.models import _user_has_perm
 from django.contrib.auth.models import _user_has_module_perms
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
+from random import randint
 
 
 class UserManager(BaseUserManager):
@@ -85,3 +86,15 @@ class OTP(models.Model):
     otp_code = models.IntegerField(null=False)  # 6 digits to save space with int type in the DB
     attempts = models.IntegerField(default=0, null=False)
     creation_date = models.DateTimeField(default=timezone.now, null=False)
+
+    @staticmethod
+    def is_valid(user: User, otp_code: int) -> bool:
+        try:
+            OTP.objects.get(user=user, otp_code=otp_code)
+            return True
+        except ObjectDoesNotExist:
+            return False
+
+    @staticmethod
+    def create_otp(user: User) -> tuple[OTP, bool]:
+        return OTP.objects.update_or_create(user=user, otp_code=randint(100000, 999999))
