@@ -97,8 +97,8 @@ class OTP(models.Model):
             return False
 
     @staticmethod
-    def create_otp(user: User) -> tuple[OTP, bool]:
-        return OTP.objects.update_or_create(user=user, otp_code=randint(100000, 999999))
+    def update_or_create_otp(user: User) -> tuple[OTP, bool]:
+        return OTP.objects.update_or_create(user=user, defaults={'user': user, 'otp_code':randint(100000, 999999)})
 
 
 class Message(models.Model):
