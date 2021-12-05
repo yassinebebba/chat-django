@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.models import _user_has_perm
 from django.contrib.auth.models import _user_has_module_perms
 from django.utils import timezone
-
+from django.core.exceptions import ObjectDoesNotExist
 
 class UserManager(BaseUserManager):
     def create_user(self, phone_number: str, password: str):
@@ -39,6 +41,13 @@ class User(AbstractBaseUser):
     objects = UserManager()
 
     USERNAME_FIELD = phone_number
+
+    @staticmethod
+    def exists(phone_number: str) -> User | None:
+        try:
+            return User.objects.get(phone_number=phone_number)
+        except ObjectDoesNotExist:
+            return None
 
     def has_perm(self, perm: str, obj=None) -> bool:
         if self.is_active and self.is_admin:
