@@ -35,6 +35,10 @@ class RegistrationView(APIView):
             response['error'] = 'wrong information'
             response['details'] = 'field `phone_number` must not be empty'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
+        elif not re.search('^.{8,30}$', request.data['password']):
+            response['error'] = 'wrong information'
+            response['details'] = 'password must be between 8 and 30 characters'
+            status_code = status.HTTP_406_NOT_ACCEPTABLE
         else:
             serializer = UserSerializer(data=request.data)
             if serializer.is_valid():
@@ -45,17 +49,13 @@ class RegistrationView(APIView):
                     response['details'] = 'invalid phone number'
                     status_code = status.HTTP_406_NOT_ACCEPTABLE
             else:
-                user: User = User.exists(request.data['phone_number'])
-                if user:
-                    otp, created = OTP.update_or_create_otp(user)
-                    if not created and not self.send_otp(request.data['phone_number'], otp.otp_code):
-                        response['error'] = 'invalid phone number'
-                        response['details'] = 'invalid phone number'
-                        status_code = status.HTTP_406_NOT_ACCEPTABLE
-                else:
-                    response['error'] = 'error'
-                    response['details'] = 'something went wrong'
-                    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+                user, _ = User.update_or_create_user(request.data['phone_number'], request.data['password'])
+                otp, created = OTP.update_or_create_otp(user)
+                if not created and not self.send_otp(request.data['phone_number'], otp.otp_code):
+                    response['error'] = 'invalid phone number'
+                    response['details'] = 'invalid phone number'
+                    status_code = status.HTTP_406_NOT_ACCEPTABLE
+
                 # response['error'] = 'error'
                 # response['details'] = 'Phone number might be in use'
                 # status_code = status.HTTP_406_NOT_ACCEPTABLE
