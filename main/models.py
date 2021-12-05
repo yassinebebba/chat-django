@@ -18,12 +18,13 @@ class UserManager(BaseUserManager):
             return ValueError('User must have a password')
 
         user = self.model(phone_number=phone_number)
-        user.set_passowrd(password)
+        user.set_password(password)
         user.save(using=self._db)
         return user
 
     def create_superuser(self, phone_number: str, password: str):
         user = self.create_user(phone_number, password)
+        user.is_active = True
         user.is_staff = True
         user.is_admin = True
         user.save(using=self._db)
@@ -42,7 +43,7 @@ class User(AbstractBaseUser):
 
     objects = UserManager()
 
-    USERNAME_FIELD = phone_number
+    USERNAME_FIELD = 'phone_number'
 
     @staticmethod
     def exists(phone_number: str) -> User | None:
