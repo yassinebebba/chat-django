@@ -1,5 +1,5 @@
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.generics import CreateAPIView
+from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 import re
@@ -16,7 +16,7 @@ class UserViewSet(ModelViewSet):
     serializer_class = UserSerializer
 
 
-class RegistrationView(CreateAPIView):
+class RegistrationView(APIView):
     """
        API to register users
     """
@@ -46,7 +46,7 @@ class RegistrationView(CreateAPIView):
                     client = Client(account_sid, auth_token)
                     try:
                         client.messages.create(
-                            body='Welcome to SGB\'s Utopia! this is your code: {otp.otp_code}',
+                            body=f'Welcome to SGB\'s Utopia! this is your code: {otp.otp_code}',
                             from_=twilio_phone_number,
                             to=request.data['phone_number']
                         )
@@ -58,5 +58,44 @@ class RegistrationView(CreateAPIView):
                 response['error'] = 'error'
                 response['details'] = 'Phone number might be in use'
                 status_code = status.HTTP_406_NOT_ACCEPTABLE
+
+        return Response(data=response, status=status_code)
+
+
+class OTPValidationView(APIView):
+    """
+    Validates the user's OTP
+    """
+
+    def post(self, request, *args, **kwargs):
+        response: dict = {'details': 'success'}
+        status_code: int = status.HTTP_200_OK
+        if len(request.data) != 3:
+            response['error'] = 'not allowed'
+            response['details'] = 'fields `phone_number`, `password` and `otp` are required'
+            status_code = status.HTTP_406_NOT_ACCEPTABLE
+        elif not re.search('^\+[0-9]{7,15}$', request.data['phone_number']):
+            response['error'] = 'wrong information'
+            response['details'] = 'field `phone_number` must not be empty'
+            status_code = status.HTTP_406_NOT_ACCEPTABLE
+        elif not isinstance(request.data['otp'], int):
+            response['error'] = 'wrong information'
+            response['details'] = 'Invalid OTP'
+            status_code = status.HTTP_406_NOT_ACCEPTABLE
+        else:
+            user: User = User.exists(request.data['phone_number'])
+            if user:
+                if user.is_active:
+                    pass
+                elif OTP.is_valid(user, request.data['otp']):
+                    user.activate()
+                else:
+                    response['error'] = 'error'
+                    response['details'] = 'Invalid OTP'
+                    status_code = status.HTTP_406_NOT_ACCEPTABLE
+            else:
+                response['error'] = 'error'
+                response['details'] = 'Phone number does not exist'
+                status_code = status.HTTP_404_NOT_FOUND
 
         return Response(data=response, status=status_code)
