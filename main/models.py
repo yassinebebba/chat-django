@@ -98,3 +98,22 @@ class OTP(models.Model):
     @staticmethod
     def create_otp(user: User) -> tuple[OTP, bool]:
         return OTP.objects.update_or_create(user=user, otp_code=randint(100000, 999999))
+
+
+class Message(models.Model):
+    class Meta:
+        db_table = 'message'
+
+    sender = models.ForeignKey(User, related_name='sender_set', on_delete=models.DO_NOTHING, null=False)
+    recipient = models.ForeignKey(User, related_name='recipient_set', on_delete=models.DO_NOTHING, null=False)
+    content = models.CharField(max_length=250, null=False)
+    creation_date = models.DateTimeField(default=timezone.now, null=False)
+    delivered = models.BooleanField(default=False, null=False)
+    read = models.BooleanField(default=False, null=False)
+    deleted = models.BooleanField(default=False, null=False)
+
+    def __repr__(self):
+        return f'Message(sender={self.sender!r}, recipient={self.recipient!r}, content=\'{self.content}\')'
+
+    def __str__(self):
+        return f'{self.sender.phone_number} -> {self.recipient.phone_number}'
