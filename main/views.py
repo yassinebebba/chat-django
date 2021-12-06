@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from rest_framework.viewsets import ModelViewSet
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
@@ -23,30 +22,43 @@ class RegistrationView(APIView):
         status_code: int = status.HTTP_200_OK
         if len(request.data) != 2:
             response['error'] = 'not allowed'
-            response['details'] = 'only fields `phone_number` and `password` are required'
+            response['details'] = 'only fields `phone_number` ' \
+                                  'and `password` are required'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
-        elif not re.search('^\+[0-9]{7,15}$', request.data['phone_number']):
-            # concatenate the country code and the phone number before submission
+        elif not re.search(r'^\+[0-9]{7,15}$', request.data['phone_number']):
+            # concatenate country code and the phone number before submission
             response['error'] = 'wrong information'
             response['details'] = 'field `phone_number` must not be empty'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
         elif not re.search('^.{8,30}$', request.data['password']):
             response['error'] = 'wrong information'
-            response['details'] = 'password must be between 8 and 30 characters'
+            response['details'] = 'password must be ' \
+                                  'between 8 and 30 characters'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
         else:
             serializer = UserSerializer(data=request.data)
             if serializer.is_valid():
                 user = serializer.save()
                 otp, created = OTP.update_or_create_otp(user)
-                if created and not self.send_otp(request.data['phone_number'], otp.otp_code):
+                is_sent: bool = self.send_otp(
+                    request.data['phone_number'],
+                    otp.otp_code
+                )
+                if created and not is_sent:
                     response['error'] = 'invalid phone number'
                     response['details'] = 'invalid phone number'
                     status_code = status.HTTP_406_NOT_ACCEPTABLE
             else:
-                user, _ = User.update_or_create_user(request.data['phone_number'], request.data['password'])
+                user, _ = User.update_or_create_user(
+                    request.data['phone_number'],
+                    request.data['password']
+                )
                 otp, created = OTP.update_or_create_otp(user)
-                if not created and not self.send_otp(request.data['phone_number'], otp.otp_code):
+                is_sent: bool = self.send_otp(
+                    request.data['phone_number'],
+                    otp.otp_code
+                )
+                if not created and not is_sent:
                     response['error'] = 'invalid phone number'
                     response['details'] = 'invalid phone number'
                     status_code = status.HTTP_406_NOT_ACCEPTABLE
@@ -64,7 +76,8 @@ class RegistrationView(APIView):
         client = Client(account_sid, auth_token)
         try:
             client.messages.create(
-                body=f'Welcome to SGB\'s Utopia! this is your code: {otp_code}',
+                body='Welcome to SGB\'s Utopia'
+                     f'! this is your code: {otp_code}',
                 from_=twilio_phone_number,
                 to=phone_number
             )
@@ -83,9 +96,10 @@ class OTPValidationView(APIView):
         status_code: int = status.HTTP_200_OK
         if len(request.data) != 3:
             response['error'] = 'not allowed'
-            response['details'] = 'fields `phone_number`, `password` and `otp` are required'
+            response['details'] = 'fields `phone_number`, ' \
+                                  '`password` and `otp` are required'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
-        elif not re.search('^\+[0-9]{7,15}$', request.data['phone_number']):
+        elif not re.search(r'^\+[0-9]{7,15}$', request.data['phone_number']):
             response['error'] = 'wrong information'
             response['details'] = 'field `phone_number` must not be empty'
             status_code = status.HTTP_406_NOT_ACCEPTABLE

@@ -54,7 +54,10 @@ class User(AbstractBaseUser):
 
     @staticmethod
     def update_or_create_user(phone_number, password) -> tuple[User, bool]:
-        user, created = User.objects.update_or_create(phone_number=phone_number, defaults={'phone_number': phone_number})
+        user, created = User.objects.update_or_create(
+            phone_number=phone_number,
+            defaults={'phone_number': phone_number}
+        )
         user.set_password(password)
         user.save()
         return user, created
@@ -91,7 +94,8 @@ class OTP(models.Model):
         db_table = 'otp'
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=False)
-    otp_code = models.IntegerField(null=False)  # 6 digits to save space with int type in the DB
+    # 6 digits to save space with int type in the DB
+    otp_code = models.IntegerField(null=False)
     attempts = models.IntegerField(default=0, null=False)
     creation_date = models.DateTimeField(default=timezone.now, null=False)
 
@@ -105,15 +109,20 @@ class OTP(models.Model):
 
     @staticmethod
     def update_or_create_otp(user: User) -> tuple[OTP, bool]:
-        return OTP.objects.update_or_create(user=user, defaults={'user': user, 'otp_code':randint(100000, 999999)})
+        return OTP.objects.update_or_create(
+            user=user,
+            defaults={'user': user, 'otp_code': randint(100000, 999999)}
+        )
 
 
 class Message(models.Model):
     class Meta:
         db_table = 'message'
 
-    sender = models.ForeignKey(User, related_name='sender_set', on_delete=models.DO_NOTHING, null=False)
-    recipient = models.ForeignKey(User, related_name='recipient_set', on_delete=models.DO_NOTHING, null=False)
+    sender = models.ForeignKey(User, related_name='sender_set',
+                               on_delete=models.DO_NOTHING, null=False)
+    recipient = models.ForeignKey(User, related_name='recipient_set',
+                                  on_delete=models.DO_NOTHING, null=False)
     content = models.CharField(max_length=250, null=False)
     creation_date = models.DateTimeField(default=timezone.now, null=False)
     delivered = models.BooleanField(default=False, null=False)
@@ -121,7 +130,8 @@ class Message(models.Model):
     deleted = models.BooleanField(default=False, null=False)
 
     def __repr__(self):
-        return f'Message(sender={self.sender!r}, recipient={self.recipient!r}, content=\'{self.content}\')'
+        return f'Message(sender={self.sender!r}, ' \
+               f'recipient={self.recipient!r}, content=\'{self.content}\')'
 
     def __str__(self):
         return f'{self.sender.phone_number} -> {self.recipient.phone_number}'
