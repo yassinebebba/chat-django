@@ -13,11 +13,6 @@ from .models import OTP
 from .serializers import UserSerializer
 
 
-class UserViewSet(ModelViewSet):
-    queryset = User
-    serializer_class = UserSerializer
-
-
 class RegistrationView(APIView):
     """
        API to register users
