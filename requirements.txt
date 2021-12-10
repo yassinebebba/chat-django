@@ -9,13 +9,16 @@ cffi==1.15.0
 channels==3.0.4
 channels-redis==3.3.1
 charset-normalizer==2.0.9
+click==8.0.3
 constantly==15.1.0
 cryptography==36.0.0
 daphne==3.0.2
 Django==3.2.9
 djangorestframework==3.12.4
 flake8==4.0.1
+h11==0.12.0
 hiredis==2.0.0
+httptools==0.3.0
 hyperlink==21.0.0
 idna==3.3
 incremental==21.3.0
@@ -28,7 +31,9 @@ pycparser==2.21
 pyflakes==2.4.0
 PyJWT==2.3.0
 pyOpenSSL==21.0.0
+python-dotenv==0.19.2
 pytz==2021.3
+PyYAML==6.0
 requests==2.26.0
 service-identity==21.1.0
 six==1.16.0
@@ -38,4 +43,8 @@ Twisted==21.7.0
 txaio==21.2.1
 typing_extensions==4.0.1
 urllib3==1.26.7
+uvicorn==0.16.0
+uvloop==0.16.0
+watchgod==0.7
+websockets==10.1
 zope.interface==5.4.0
