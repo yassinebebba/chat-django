@@ -1,23 +1,22 @@
-FROM python:3
+FROM python
+
+WORKDIR /opt/chat_django
 
 ENV PORT 8000
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+ENV VIRTUAL_ENV=/opt/chat_django/venv
 
-WORKDIR /chat_django
+RUN python -m venv $VIRTUAL_ENV
 
-COPY requirements.txt /chat_django/
-COPY twilio.env /chat_django/
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+COPY requirements.txt /opt/chat_django/
+
+COPY twilio.env /opt/chat_django/
 
 CMD [".", "twilio.env"]
 
-CMD ["python", "-m", "venv", "venv"]
-
-CMD [".", "venv/bin/activate"]
-
 RUN pip install -r requirements.txt
 
-COPY . /chat_django
+COPY . /opt/chat_django
 
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "chat.asgi", "-w", "4", "-k" , "uvicorn.workers.UvicornWorker"]
-#CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
