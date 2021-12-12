@@ -33,11 +33,10 @@ ALLOWED_HOSTS = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "www.chat-django.yassinebebba.com",
-    "chat-django.yassinebebba.com",
+    "https://www.chat-django.yassinebebba.com",
+    "https://chat-django.yassinebebba.com",
     "https://bebba.yassinebebba.com",
     "https://www.bebba.yassinebebba.com",
-    "localhost",
     "http://127.0.0.1:3000",
 ]
 
