@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+import jwt
 import re
 import os
 from twilio.rest import Client
@@ -37,6 +38,7 @@ class RegistrationView(APIView):
                                   'between 8 and 30 characters'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
         else:
+            # TODO: SECURITY HOLE create a user after validation
             serializer = UserSerializer(data=request.data)
             if serializer.is_valid():
                 user = serializer.save()
@@ -109,7 +111,7 @@ class OTPValidationView(APIView):
             response['details'] = 'Invalid OTP'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
         else:
-            user: User = User.exists(request.data['phone_number'])
+            user: User = User.exists(phone_number=request.data['phone_number'])
             if user:
                 if user.is_active:
                     pass
@@ -133,7 +135,8 @@ class LoginView(APIView):
     """
 
     def post(self, request, *args, **kwargs):
-        response: dict = {'details': 'success', 'access_token': '', 'refresh_token': ''}
+        response: dict = {'details': 'success', 'access_token': '',
+                          'refresh_token': ''}
         status_code: int = status.HTTP_200_OK
         if len(request.data) != 2:
             response['error'] = 'not allowed'
@@ -144,13 +147,56 @@ class LoginView(APIView):
             response['error'] = 'wrong information'
             response['details'] = 'field `phone_number` must not be empty'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
+        elif not re.search('^.{8,30}$', request.data['password']):
+            response['error'] = 'wrong information'
+            response['details'] = 'password must be ' \
+                                  'between 8 and 30 characters'
+            status_code = status.HTTP_406_NOT_ACCEPTABLE
         else:
-            user: User = User.exists(request.data['phone_number'])
-            if user:
+            user: User = User.exists(phone_number=request.data['phone_number'])
+            if user and user.check_password(request.data['password']):
                 if user.is_active:
                     refresh = RefreshToken.for_user(user)
                     response['access_token'] = str(refresh.access_token)
                     response['refresh_token'] = str(refresh)
+                else:
+                    response['error'] = 'error'
+                    response[
+                        'details'] = 'Register again and verify your account'
+                    status_code = status.HTTP_406_NOT_ACCEPTABLE
+            else:
+                response['error'] = 'error'
+                response['details'] = 'Wrong phone number or password'
+                status_code = status.HTTP_404_NOT_FOUND
+
+        return Response(data=response, status=status_code)
+
+
+class UserDetailsView(APIView):
+    """
+    Login user and send JWT
+    """
+
+    def post(self, request, *args, **kwargs):
+        response: dict = {}
+        status_code: int = status.HTTP_200_OK
+        if len(request.data) != 1:
+            response['error'] = 'not allowed'
+            response['details'] = 'fields `access_token` ' \
+                                  'is required'
+            status_code = status.HTTP_406_NOT_ACCEPTABLE
+        elif not request.data.get('access_token', None):
+            response['error'] = 'wrong information'
+            response['details'] = 'field `access_token` must not be empty'
+            status_code = status.HTTP_406_NOT_ACCEPTABLE
+        else:
+            decoded: dict = jwt.decode(request.data['access_token'],
+                                       'django-insecure-#60=6k*hajinp%m=e5$mn=+gr(&g6b)+91smxi*wv+3827x5nv',
+                                       algorithms=['HS256'])
+            user: User = User.exists(pk=decoded['user_id'])
+            if user:
+                if user.is_active:
+                    response['phone_number'] = user.phone_number
                 else:
                     response['error'] = 'error'
                     response[
