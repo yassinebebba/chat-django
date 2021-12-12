@@ -3,6 +3,7 @@ from __future__ import annotations
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 import re
 import os
 from twilio.rest import Client
@@ -117,6 +118,43 @@ class OTPValidationView(APIView):
                 else:
                     response['error'] = 'error'
                     response['details'] = 'Invalid OTP'
+                    status_code = status.HTTP_406_NOT_ACCEPTABLE
+            else:
+                response['error'] = 'error'
+                response['details'] = 'Phone number does not exist'
+                status_code = status.HTTP_404_NOT_FOUND
+
+        return Response(data=response, status=status_code)
+
+
+class LoginView(APIView):
+    """
+    Login user and send JWT
+    """
+
+    def post(self, request, *args, **kwargs):
+        response: dict = {'details': 'success', 'access_token': '', 'refresh_token': ''}
+        status_code: int = status.HTTP_200_OK
+        if len(request.data) != 2:
+            response['error'] = 'not allowed'
+            response['details'] = 'fields `phone_number` and ' \
+                                  '`password` are required'
+            status_code = status.HTTP_406_NOT_ACCEPTABLE
+        elif not re.search(r'^\+[0-9]{7,15}$', request.data['phone_number']):
+            response['error'] = 'wrong information'
+            response['details'] = 'field `phone_number` must not be empty'
+            status_code = status.HTTP_406_NOT_ACCEPTABLE
+        else:
+            user: User = User.exists(request.data['phone_number'])
+            if user:
+                if user.is_active:
+                    refresh = RefreshToken.for_user(user)
+                    response['access_token'] = str(refresh.access_token)
+                    response['refresh_token'] = str(refresh)
+                else:
+                    response['error'] = 'error'
+                    response[
+                        'details'] = 'Register again and verify your account'
                     status_code = status.HTTP_406_NOT_ACCEPTABLE
             else:
                 response['error'] = 'error'
