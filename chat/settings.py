@@ -35,8 +35,10 @@ ALLOWED_HOSTS = [
 CORS_ALLOWED_ORIGINS = [
     "www.chat-django.yassinebebba.com",
     "chat-django.yassinebebba.com",
+    "https://bebba.yassinebebba.com",
+    "https://www.bebba.yassinebebba.com",
     "localhost",
-    "127.0.0.1",
+    "http://127.0.0.1:3000",
 ]
 
 AUTH_USER_MODEL = 'main.User'  # Custom user model.
