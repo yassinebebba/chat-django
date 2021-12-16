@@ -1,3 +1,8 @@
+import os
+import django
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'chat.settings')
+django.setup()
 import json
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -48,7 +53,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
 
 class UserAuthorizationConsumer(AsyncWebsocketConsumer):
-
     @sync_to_async
     def authorize(self, access_token, channel_name):
         user = User.exists(access_token=access_token)
