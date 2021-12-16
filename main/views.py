@@ -22,20 +22,14 @@ class RegistrationView(APIView):
     def post(self, request, *args, **kwargs):
         response: dict = {'details': 'success'}
         status_code: int = status.HTTP_200_OK
-        if len(request.data) != 2:
+        if len(request.data) != 1:
             response['error'] = 'not allowed'
-            response['details'] = 'only fields `phone_number` ' \
-                                  'and `password` are required'
+            response['details'] = 'only field `phone_number`'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
-        elif not re.search(r'^\+[0-9]{7,15}$', request.data['phone_number']):
+        elif not re.search(r'^\+[0-9]{7,15}$', request.data.get('phone_number', '')):
             # concatenate country code and the phone number before submission
             response['error'] = 'wrong information'
-            response['details'] = 'field `phone_number` must not be empty'
-            status_code = status.HTTP_406_NOT_ACCEPTABLE
-        elif not re.search('^.{8,30}$', request.data['password']):
-            response['error'] = 'wrong information'
-            response['details'] = 'password must be ' \
-                                  'between 8 and 30 characters'
+            response['details'] = '`phone_number` must not be empty'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
         else:
             # TODO: SECURITY HOLE create a user after validation
@@ -52,10 +46,7 @@ class RegistrationView(APIView):
                     response['details'] = 'invalid phone number'
                     status_code = status.HTTP_406_NOT_ACCEPTABLE
             else:
-                user, _ = User.update_or_create_user(
-                    request.data['phone_number'],
-                    request.data['password']
-                )
+                user = User.exists(phone_number=request.data['phone_number'])
                 otp, created = OTP.update_or_create_otp(user)
                 is_sent: bool = self.send_otp(
                     request.data['phone_number'],
@@ -89,7 +80,7 @@ class RegistrationView(APIView):
             return False
 
 
-class OTPValidationView(APIView):
+class OTPVerifyView(APIView):
     """
     Validates the user's OTP
     """
@@ -97,14 +88,13 @@ class OTPValidationView(APIView):
     def post(self, request, *args, **kwargs):
         response: dict = {'details': 'success'}
         status_code: int = status.HTTP_200_OK
-        if len(request.data) != 3:
+        if len(request.data) != 2:
             response['error'] = 'not allowed'
-            response['details'] = 'fields `phone_number`, ' \
-                                  '`password` and `otp` are required'
+            response['details'] = 'only `phone_number` and `otp` are required'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
-        elif not re.search(r'^\+[0-9]{7,15}$', request.data['phone_number']):
+        elif not re.search(r'^\+[0-9]{7,15}$', request.data.get('phone_number', '')):
             response['error'] = 'wrong information'
-            response['details'] = 'field `phone_number` must not be empty'
+            response['details'] = '`phone_number` must not be empty'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
         elif not isinstance(request.data['otp'], int):
             response['error'] = 'wrong information'
@@ -117,6 +107,9 @@ class OTPValidationView(APIView):
                     pass
                 elif OTP.is_valid(user, request.data['otp']):
                     user.activate()
+                    refresh = RefreshToken.for_user(user)
+                    response['access_token'] = str(refresh.access_token)
+                    response['refresh_token'] = str(refresh)
                 else:
                     response['error'] = 'error'
                     response['details'] = 'Invalid OTP'
