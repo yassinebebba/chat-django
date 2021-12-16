@@ -29,7 +29,10 @@ DEBUG = True
 ALLOWED_HOSTS = [
     'www.chat-django.yassinebebba.com',
     'chat-django.yassinebebba.com',
-    'localhost', '127.0.0.1'
+    'localhost',
+    '127.0.0.1',
+    # AVD Emulator
+    '10.0.2.2',
 ]
 
 CORS_ALLOWED_ORIGINS = [

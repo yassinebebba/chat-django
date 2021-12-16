@@ -14,7 +14,7 @@ from .models import OTP
 from .serializers import UserSerializer
 
 
-class RegistrationView(APIView):
+class LoginView(APIView):
     """
        API to register users
     """
@@ -48,6 +48,8 @@ class RegistrationView(APIView):
                     status_code = status.HTTP_406_NOT_ACCEPTABLE
             else:
                 user = User.exists(phone_number=request.data['phone_number'])
+                user.is_active = False
+                user.save()
                 otp, created = OTP.update_or_create_otp(user)
                 is_sent: bool = self.send_otp(
                     request.data['phone_number'],
@@ -81,7 +83,7 @@ class RegistrationView(APIView):
             return False
 
 
-class OTPVerifyView(APIView):
+class OTPVerificationView(APIView):
     """
     Validates the user's OTP
     """
