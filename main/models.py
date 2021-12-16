@@ -50,23 +50,12 @@ class User(AbstractBaseUser):
 
     USERNAME_FIELD = 'phone_number'
 
-
     @staticmethod
     def exists(**kwargs) -> User | None:
         try:
             return User.objects.get(**kwargs)
         except ObjectDoesNotExist:
             return None
-
-    @staticmethod
-    def update_or_create_user(phone_number, password) -> tuple[User, bool]:
-        user, created = User.objects.update_or_create(
-            phone_number=phone_number,
-            defaults={'phone_number': phone_number}
-        )
-        user.set_password(password)
-        user.save()
-        return user, created
 
     def activate(self) -> None:
         self.is_active = True
