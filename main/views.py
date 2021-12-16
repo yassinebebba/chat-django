@@ -135,8 +135,7 @@ class LoginView(APIView):
     """
 
     def post(self, request, *args, **kwargs):
-        response: dict = {'details': 'success', 'access_token': '',
-                          'refresh_token': ''}
+        response: dict = {'details': 'success'}
         status_code: int = status.HTTP_200_OK
         if len(request.data) != 2:
             response['error'] = 'not allowed'

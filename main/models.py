@@ -39,6 +39,7 @@ class User(AbstractBaseUser):
         db_table = 'user'
 
     phone_number = models.CharField(max_length=15, unique=True, null=False)
+    # access_token = models.CharField(max_length=1024, unique=True, null=False)
     creation_date = models.DateTimeField(default=timezone.now, null=False)
     is_active = models.BooleanField(default=False, null=False)
     is_staff = models.BooleanField(default=False, null=False)
