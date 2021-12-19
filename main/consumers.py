@@ -66,11 +66,17 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
     def get_user_channel_name(self, phone_number):
         return User.exists(phone_number=phone_number).channel_name
 
+    @sync_to_async
+    def delete_socket_session(self, user: User):
+        user.access_token = ''
+        user.save()
+
     async def connect(self):
         self.access_token = self.scope['url_route']['kwargs']['access_token']
         user = await self.authorize(self.access_token, self.channel_name)
         if user:
             self.connect_users_group = 'connected_users'
+            self.user = user
             # join room group
             # await self.channel_layer.group_add(
             #     self.connect_users_group,
@@ -82,6 +88,7 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, code):
         await self.close(code)
+        await  self.delete_socket_session(self.user)
 
     async def receive(self, text_data=None, bytes_data=None):
         # Receive message from WebSocket

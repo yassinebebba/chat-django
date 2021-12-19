@@ -9,9 +9,6 @@ from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 from random import randint
 
-from typing import Union
-from typing import overload
-
 
 class UserManager(BaseUserManager):
     def create_user(self, phone_number: str, password: str):
