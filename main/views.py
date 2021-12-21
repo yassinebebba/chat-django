@@ -26,7 +26,7 @@ class LoginView(APIView):
             response['error'] = 'not allowed'
             response['details'] = 'only field `phone_number`'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
-        elif not re.search(r'^\+[0-9]{7,15}$',
+        elif not re.search(r'^\+[0-9]{7,20}$',
                            request.data.get('phone_number', '')):
             # concatenate country code and the phone number before submission
             response['error'] = 'wrong information'
@@ -95,7 +95,7 @@ class OTPVerificationView(APIView):
             response['error'] = 'not allowed'
             response['details'] = 'only `phone_number` and `otp` are required'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
-        elif not re.search(r'^\+[0-9]{7,15}$',
+        elif not re.search(r'^\+[0-9]{7,20}$',
                            request.data.get('phone_number', '')):
             response['error'] = 'wrong information'
             response['details'] = '`phone_number` must not be empty'
