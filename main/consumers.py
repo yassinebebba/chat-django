@@ -90,12 +90,12 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         type = text_data_json['type']
 
-
         if type == 'private_message':
             sender = text_data_json['sender']
             receiver = text_data_json['receiver']
             message = text_data_json['message']
             hash = text_data_json['hash']
+            timestamp = text_data_json['timestamp']
             sender_channel_name = await self.get_user_channel_name(sender)
             receiver_channel_name = await self.get_user_channel_name(receiver)
             await self.channel_layer.send(
@@ -106,6 +106,7 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
                     'receiver': receiver,
                     'message': message,
                     'hash': hash,
+                    'timestamp': timestamp,
                 }
             )
 
@@ -117,12 +118,12 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
                     'receiver': receiver,
                     'message': message,
                     'hash': hash,
+                    'timestamp': timestamp,
                 }
             )
         elif type == 'delete_private_message':
             sender = text_data_json['sender']
             receiver = text_data_json['receiver']
-            message = text_data_json['message']
             hash = text_data_json['hash']
             sender_channel_name = await self.get_user_channel_name(sender)
             receiver_channel_name = await self.get_user_channel_name(receiver)
@@ -145,8 +146,6 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
                     'hash': hash,
                 }
             )
-
-
 
     async def private_message(self, event):
         # Receive message from room group
@@ -155,6 +154,7 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
         receiver = event['receiver']
         message = event['message']
         hash = event['hash']
+        timestamp = event['timestamp']
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
@@ -163,6 +163,7 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
             'receiver': receiver,
             'message': message,
             'hash': hash,
+            'timestamp': timestamp,
         }))
 
     async def delete_private_message(self, event):
