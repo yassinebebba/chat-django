@@ -68,7 +68,7 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
 
     @sync_to_async
     def delete_socket_session(self, user: User):
-        user.access_token = ''
+        user.channel_name = ''
         user.save()
 
     async def connect(self):
@@ -77,58 +77,105 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
         if user:
             self.connect_users_group = 'connected_users'
             self.user = user
-            # join room group
-            # await self.channel_layer.group_add(
-            #     self.connect_users_group,
-            #     self.channel_name
-            # )
             await self.accept()
         else:
             await self.close(None)
 
     async def disconnect(self, code):
         await self.close(code)
-        await  self.delete_socket_session(self.user)
+        # await  self.delete_socket_session(self.user)
 
     async def receive(self, text_data=None, bytes_data=None):
         # Receive message from WebSocket
         text_data_json = json.loads(text_data)
-        sender = text_data_json['sender']
-        receiver = text_data_json['receiver']
-        message = text_data_json['message']
+        type = text_data_json['type']
 
-        sender_channel_name = await self.get_user_channel_name(sender)
-        receiver_channel_name = await self.get_user_channel_name(receiver)
 
-        await self.channel_layer.send(
-            sender_channel_name,
-            {
-                'type': 'chat_message',
-                'sender': sender,
-                'receiver': receiver,
-                'message': message,
-            }
-        )
+        if type == 'private_message':
+            sender = text_data_json['sender']
+            receiver = text_data_json['receiver']
+            message = text_data_json['message']
+            hash = text_data_json['hash']
+            sender_channel_name = await self.get_user_channel_name(sender)
+            receiver_channel_name = await self.get_user_channel_name(receiver)
+            await self.channel_layer.send(
+                sender_channel_name,
+                {
+                    'type': type,
+                    'sender': sender,
+                    'receiver': receiver,
+                    'message': message,
+                    'hash': hash,
+                }
+            )
 
-        await self.channel_layer.send(
-            receiver_channel_name,
-            {
-                'type': 'chat_message',
-                'sender': sender,
-                'receiver': receiver,
-                'message': message,
-            }
-        )
+            await self.channel_layer.send(
+                receiver_channel_name,
+                {
+                    'type': type,
+                    'sender': sender,
+                    'receiver': receiver,
+                    'message': message,
+                    'hash': hash,
+                }
+            )
+        elif type == 'delete_private_message':
+            sender = text_data_json['sender']
+            receiver = text_data_json['receiver']
+            message = text_data_json['message']
+            hash = text_data_json['hash']
+            sender_channel_name = await self.get_user_channel_name(sender)
+            receiver_channel_name = await self.get_user_channel_name(receiver)
+            await self.channel_layer.send(
+                sender_channel_name,
+                {
+                    'type': type,
+                    'sender': sender,
+                    'receiver': receiver,
+                    'hash': hash,
+                }
+            )
 
-    async def chat_message(self, event):
+            await self.channel_layer.send(
+                receiver_channel_name,
+                {
+                    'type': type,
+                    'sender': sender,
+                    'receiver': receiver,
+                    'hash': hash,
+                }
+            )
+
+
+
+    async def private_message(self, event):
         # Receive message from room group
-        receiver = event['receiver']
+        type = event['type']
         sender = event['sender']
+        receiver = event['receiver']
         message = event['message']
+        hash = event['hash']
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
+            'type': type,
             'sender': sender,
             'receiver': receiver,
             'message': message,
+            'hash': hash,
+        }))
+
+    async def delete_private_message(self, event):
+        # Receive message from room group
+        type = event['type']
+        sender = event['sender']
+        receiver = event['receiver']
+        hash = event['hash']
+
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({
+            'type': type,
+            'sender': sender,
+            'receiver': receiver,
+            'hash': hash,
         }))
