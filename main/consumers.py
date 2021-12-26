@@ -173,6 +173,31 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
                 }
             )
 
+        elif type == 'message_read':
+            sender = text_data_json['sender']
+            receiver = text_data_json['receiver']
+            hash = text_data_json['hash']
+            sender_channel_name = await self.get_user_channel_name(sender)
+            receiver_channel_name = await self.get_user_channel_name(receiver)
+            await self.channel_layer.send(
+                sender_channel_name,
+                {
+                    'type': type,
+                    'sender': sender,
+                    'receiver': receiver,
+                    'hash': hash,
+                }
+            )
+
+            await self.channel_layer.send(
+                receiver_channel_name,
+                {
+                    'type': type,
+                    'sender': sender,
+                    'receiver': receiver,
+                    'hash': hash,
+                }
+            )
 
     async def private_message(self, event):
         # Receive message from room group
@@ -209,6 +234,21 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
         }))
 
     async def message_delivered(self, event):
+        # Receive message from room group
+        type = event['type']
+        sender = event['sender']
+        receiver = event['receiver']
+        hash = event['hash']
+
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({
+            'type': type,
+            'sender': sender,
+            'receiver': receiver,
+            'hash': hash,
+        }))
+
+    async def message_read(self, event):
         # Receive message from room group
         type = event['type']
         sender = event['sender']
