@@ -111,7 +111,8 @@ class OTPVerificationView(APIView):
                     pass
                 elif OTP.is_valid(user, request.data['otp']):
                     user.activate()
-                    access_token = str(RefreshToken.for_user(user).access_token)
+                    access_token = str(
+                        RefreshToken.for_user(user).access_token)
                     user.access_token = access_token
                     user.save()
                     response['access_token'] = access_token
