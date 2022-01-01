@@ -199,6 +199,38 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
                 }
             )
 
+        elif type == 'image_message':
+            sender = text_data_json['sender']
+            receiver = text_data_json['receiver']
+            image = text_data_json['image']
+            timestamp = text_data_json['timestamp']
+            hash = text_data_json['hash']
+            sender_channel_name = await self.get_user_channel_name(sender)
+            receiver_channel_name = await self.get_user_channel_name(receiver)
+            await self.channel_layer.send(
+                sender_channel_name,
+                {
+                    'type': type,
+                    'sender': sender,
+                    'receiver': receiver,
+                    'image': image,
+                    'timestamp': timestamp,
+                    'hash': hash,
+                }
+            )
+
+            await self.channel_layer.send(
+                receiver_channel_name,
+                {
+                    'type': type,
+                    'sender': sender,
+                    'receiver': receiver,
+                    'image': image,
+                    'timestamp': timestamp,
+                    'hash': hash,
+                }
+            )
+
     async def private_message(self, event):
         # Receive message from room group
         type = event['type']
@@ -260,5 +292,24 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
             'type': type,
             'sender': sender,
             'receiver': receiver,
+            'hash': hash,
+        }))
+
+    async def image_message(self, event):
+        # Receive message from room group
+        type = event['type']
+        sender = event['sender']
+        receiver = event['receiver']
+        image = event['image']
+        timestamp = event['timestamp']
+        hash = event['hash']
+
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({
+            'type': type,
+            'sender': sender,
+            'receiver': receiver,
+            'image': image,
+            'timestamp': timestamp,
             'hash': hash,
         }))

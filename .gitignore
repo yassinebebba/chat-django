@@ -10,3 +10,4 @@ __pycache__/
 db.sqlite3
 twilio.env
 .env
+boto3.cfg

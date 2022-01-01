@@ -210,3 +210,51 @@ class ContactsVerificationView(APIView):
                 status_code = status.HTTP_404_NOT_FOUND
 
         return Response(data=response, status=status_code)
+
+
+# class UploadImageView(APIView):
+#     """
+#     Upload images
+#     """
+#     def sign_request(self):
+#         pass
+#
+#     def post(self, request, *args, **kwargs):
+#         response: dict = {}
+#         status_code: int = status.HTTP_200_OK
+#         if len(request.data) != 2:
+#             response['error'] = 'not allowed'
+#             response['details'] = 'fields `access_token` ' \
+#                                   'is required'
+#             status_code = status.HTTP_406_NOT_ACCEPTABLE
+#         elif not request.data.get('access_token', None):
+#             response['error'] = 'wrong information'
+#             response['details'] = 'field `access_token` must not be empty'
+#             status_code = status.HTTP_406_NOT_ACCEPTABLE
+#         elif not request.data.get('phone_numbers', None):
+#             response['error'] = 'wrong information'
+#             response['details'] = 'field `phone_numbers` must not be empty'
+#             status_code = status.HTTP_406_NOT_ACCEPTABLE
+#         else:
+#             decoded: dict = jwt.decode(request.data['access_token'],
+#                                        'django-insecure-#60=6k*hajinp%m=e5$mn=+gr(&g6b)+91smxi*wv+3827x5nv',
+#                                        algorithms=['HS256'])
+#             user: User = User.exists(pk=decoded['user_id'])
+#             if user:
+#                 if user.is_active:
+#                     phone_numbers: list[str] = []
+#                     for phone_number in request.data.get('phone_numbers'):
+#                         if User.exists(phone_number=phone_number):
+#                             phone_numbers.append(phone_number)
+#                     response['phone_numbers'] = phone_numbers
+#                 else:
+#                     response['error'] = 'error'
+#                     response[
+#                         'details'] = 'Register again and verify your account'
+#                     status_code = status.HTTP_406_NOT_ACCEPTABLE
+#             else:
+#                 response['error'] = 'error'
+#                 response['details'] = 'Phone number does not exist'
+#                 status_code = status.HTTP_404_NOT_FOUND
+#
+#         return Response(data=response, status=status_code)
