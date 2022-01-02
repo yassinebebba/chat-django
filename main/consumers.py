@@ -151,17 +151,7 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
             sender = text_data_json['sender']
             receiver = text_data_json['receiver']
             hash = text_data_json['hash']
-            sender_channel_name = await self.get_user_channel_name(sender)
             receiver_channel_name = await self.get_user_channel_name(receiver)
-            await self.channel_layer.send(
-                sender_channel_name,
-                {
-                    'type': type,
-                    'sender': sender,
-                    'receiver': receiver,
-                    'hash': hash,
-                }
-            )
 
             await self.channel_layer.send(
                 receiver_channel_name,
@@ -177,17 +167,7 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
             sender = text_data_json['sender']
             receiver = text_data_json['receiver']
             hash = text_data_json['hash']
-            sender_channel_name = await self.get_user_channel_name(sender)
             receiver_channel_name = await self.get_user_channel_name(receiver)
-            await self.channel_layer.send(
-                sender_channel_name,
-                {
-                    'type': type,
-                    'sender': sender,
-                    'receiver': receiver,
-                    'hash': hash,
-                }
-            )
 
             await self.channel_layer.send(
                 receiver_channel_name,
