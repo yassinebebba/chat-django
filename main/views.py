@@ -196,6 +196,8 @@ class ContactsVerificationView(APIView):
                 if user.is_active:
                     phone_numbers: list[str] = []
                     for phone_number in request.data.get('phone_numbers'):
+                        if phone_number[0] != '+':
+                            phone_number = f'+{user.country_code}{phone_numbers}'
                         if User.exists(phone_number=phone_number):
                             phone_numbers.append(phone_number)
                     response['phone_numbers'] = phone_numbers
