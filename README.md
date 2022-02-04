@@ -1,4 +1,4 @@
-# chat-django
+# Chat Django
 
 ## Setup (Linux)
 
