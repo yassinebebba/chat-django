@@ -12,6 +12,7 @@ from twilio.base.exceptions import TwilioRestException
 from .models import User
 from .models import OTP
 from .serializers import UserSerializer
+from chat.settings import SECRET_KEY
 
 
 class LoginView(APIView):
@@ -84,8 +85,7 @@ class LoginView(APIView):
                 to=phone_number
             )
             return True
-        except TwilioRestException as e:
-            print(e)
+        except TwilioRestException:
             return False
 
 
@@ -102,7 +102,7 @@ class OTPVerificationView(APIView):
             response['details'] = 'only `phone_number` and `otp` are required'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
         elif not re.search(r'^\+[0-9]{1,4}$',
-                               request.data.get('country_code', '')):
+                           request.data.get('country_code', '')):
             response['error'] = 'wrong information'
             response['details'] = '`country_code` must not be empty'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
@@ -199,17 +199,21 @@ class ContactsVerificationView(APIView):
             status_code = status.HTTP_406_NOT_ACCEPTABLE
         else:
             decoded: dict = jwt.decode(request.data['access_token'],
-                                       'django-insecure-#60=6k*hajinp%m=e5$mn=+gr(&g6b)+91smxi*wv+3827x5nv',
+                                       SECRET_KEY,
                                        algorithms=['HS256'])
             user: User = User.exists(pk=decoded['user_id'])
             if user:
                 if user.is_active:
-                    phone_numbers: list[str] = []
-                    for phone_number in request.data.get('phone_numbers'):
-                        if phone_number[0] != '+':
-                            phone_number = f'+{user.country_code}{phone_numbers}'
-                        if User.exists(phone_number=phone_number):
-                            phone_numbers.append(phone_number)
+                    phone_numbers: list[dict[str, str]] = []
+                    for number in request.data.get('phone_numbers'):
+                        county_code: str = number['country_code']
+                        phone_number: str = number['phone_number']
+                        if user.country_code != county_code \
+                                and user.phone_number != phone_number \
+                                and user.phone_number != User.exists(
+                            country_code=county_code,
+                            phone_number=phone_number):
+                            phone_numbers.append(number)
                     response['phone_numbers'] = phone_numbers
                 else:
                     response['error'] = 'error'
@@ -220,7 +224,6 @@ class ContactsVerificationView(APIView):
                 response['error'] = 'error'
                 response['details'] = 'Phone number does not exist'
                 status_code = status.HTTP_404_NOT_FOUND
-
         return Response(data=response, status=status_code)
 
 # class UploadImageView(APIView):

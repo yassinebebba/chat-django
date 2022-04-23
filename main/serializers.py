@@ -5,7 +5,7 @@ from rest_framework import serializers
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = User
-        fields = ['phone_number']
+        fields = ['phone_number', 'country_code']
 
     def create(self, validated_data):
         user = super().create(validated_data)
