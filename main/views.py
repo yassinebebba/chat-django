@@ -22,13 +22,17 @@ class LoginView(APIView):
     def post(self, request, *args, **kwargs):
         response: dict = {'details': 'success'}
         status_code: int = status.HTTP_200_OK
-        if len(request.data) != 1:
+        if len(request.data) != 2:
             response['error'] = 'not allowed'
             response['details'] = 'only field `phone_number`'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
-        elif not re.search(r'^\+[0-9]{7,20}$',
+        elif not re.search(r'^\+[0-9]{1,4}$',
+                           request.data.get('country_code', '')):
+            response['error'] = 'wrong information'
+            response['details'] = '`country_code` must not be empty'
+            status_code = status.HTTP_406_NOT_ACCEPTABLE
+        elif not re.search(r'^[0-9]{7,20}$',
                            request.data.get('phone_number', '')):
-            # concatenate country code and the phone number before submission
             response['error'] = 'wrong information'
             response['details'] = '`phone_number` must not be empty'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
@@ -39,7 +43,8 @@ class LoginView(APIView):
                 user = serializer.save()
                 otp, created = OTP.update_or_create_otp(user)
                 is_sent: bool = self.send_otp(
-                    request.data['phone_number'],
+                    request.data['country_code']
+                    + request.data['phone_number'],
                     otp.otp_code
                 )
                 if created and not is_sent:
@@ -52,7 +57,8 @@ class LoginView(APIView):
                 user.save()
                 otp, created = OTP.update_or_create_otp(user)
                 is_sent: bool = self.send_otp(
-                    request.data['phone_number'],
+                    request.data['country_code']
+                    + request.data['phone_number'],
                     otp.otp_code
                 )
                 if not created and not is_sent:
@@ -63,7 +69,6 @@ class LoginView(APIView):
                 # response['error'] = 'error'
                 # response['details'] = 'Phone number might be in use'
                 # status_code = status.HTTP_406_NOT_ACCEPTABLE
-
         return Response(data=response, status=status_code)
 
     def send_otp(self, phone_number: str, otp_code: int) -> bool:
@@ -79,7 +84,8 @@ class LoginView(APIView):
                 to=phone_number
             )
             return True
-        except TwilioRestException:
+        except TwilioRestException as e:
+            print(e)
             return False
 
 
@@ -91,11 +97,16 @@ class OTPVerificationView(APIView):
     def post(self, request, *args, **kwargs):
         response: dict = {'details': 'success'}
         status_code: int = status.HTTP_200_OK
-        if len(request.data) != 2:
+        if len(request.data) != 3:
             response['error'] = 'not allowed'
             response['details'] = 'only `phone_number` and `otp` are required'
             status_code = status.HTTP_406_NOT_ACCEPTABLE
-        elif not re.search(r'^\+[0-9]{7,20}$',
+        elif not re.search(r'^\+[0-9]{1,4}$',
+                               request.data.get('country_code', '')):
+            response['error'] = 'wrong information'
+            response['details'] = '`country_code` must not be empty'
+            status_code = status.HTTP_406_NOT_ACCEPTABLE
+        elif not re.search(r'^[0-9]{7,20}$',
                            request.data.get('phone_number', '')):
             response['error'] = 'wrong information'
             response['details'] = '`phone_number` must not be empty'
@@ -124,7 +135,6 @@ class OTPVerificationView(APIView):
                 response['error'] = 'error'
                 response['details'] = 'Phone number does not exist'
                 status_code = status.HTTP_404_NOT_FOUND
-
         return Response(data=response, status=status_code)
 
 
@@ -212,7 +222,6 @@ class ContactsVerificationView(APIView):
                 status_code = status.HTTP_404_NOT_FOUND
 
         return Response(data=response, status=status_code)
-
 
 # class UploadImageView(APIView):
 #     """

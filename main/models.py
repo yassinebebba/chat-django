@@ -35,7 +35,7 @@ class User(AbstractBaseUser):
     class Meta:
         db_table = 'user'
 
-    country_code = models.CharField(max_length=4, unique=True, null=False)
+    country_code = models.CharField(max_length=4, unique=False, null=False)
     phone_number = models.CharField(max_length=20, unique=True, null=False)
     access_token = models.CharField(max_length=1024)
     channel_name = models.CharField(max_length=1024)
