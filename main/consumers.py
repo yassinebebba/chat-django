@@ -63,8 +63,9 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
         return None
 
     @sync_to_async
-    def get_user_channel_name(self, phone_number):
-        return User.exists(phone_number=phone_number).channel_name
+    def get_user_channel_name(self, country_code, phone_number):
+        return User.exists(country_code=country_code,
+                           phone_number=phone_number).channel_name
 
     @sync_to_async
     def delete_socket_session(self, user: User):
@@ -90,20 +91,29 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         type = text_data_json['type']
 
+        sender_country_code = text_data_json['sender_country_code']
+        sender_phone_number = text_data_json['sender_phone_number']
+        receiver_country_code = text_data_json['receiver_country_code']
+        receiver_phone_number = text_data_json['receiver_phone_number']
+
         if type == 'private_message':
-            sender = text_data_json['sender']
-            receiver = text_data_json['receiver']
             message = text_data_json['message']
             hash = text_data_json['hash']
             timestamp = text_data_json['timestamp']
-            sender_channel_name = await self.get_user_channel_name(sender)
-            receiver_channel_name = await self.get_user_channel_name(receiver)
+            sender_channel_name = await self.get_user_channel_name(
+                sender_country_code, sender_phone_number
+            )
+            receiver_channel_name = await self.get_user_channel_name(
+                receiver_country_code, receiver_phone_number
+            )
             await self.channel_layer.send(
                 sender_channel_name,
                 {
                     'type': type,
-                    'sender': sender,
-                    'receiver': receiver,
+                    'sender_country_code': sender_country_code,
+                    'sender_phone_number': sender_phone_number,
+                    'receiver_country_code': receiver_country_code,
+                    'receiver_phone_number': receiver_phone_number,
                     'message': message,
                     'hash': hash,
                     'timestamp': timestamp,
@@ -114,25 +124,31 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
                 receiver_channel_name,
                 {
                     'type': type,
-                    'sender': sender,
-                    'receiver': receiver,
+                    'sender_country_code': sender_country_code,
+                    'sender_phone_number': sender_phone_number,
+                    'receiver_country_code': receiver_country_code,
+                    'receiver_phone_number': receiver_phone_number,
                     'message': message,
                     'hash': hash,
                     'timestamp': timestamp,
                 }
             )
         elif type == 'delete_private_message':
-            sender = text_data_json['sender']
-            receiver = text_data_json['receiver']
             hash = text_data_json['hash']
-            sender_channel_name = await self.get_user_channel_name(sender)
-            receiver_channel_name = await self.get_user_channel_name(receiver)
+            sender_channel_name = await self.get_user_channel_name(
+                sender_country_code, sender_phone_number
+            )
+            receiver_channel_name = await self.get_user_channel_name(
+                receiver_country_code, receiver_phone_number
+            )
             await self.channel_layer.send(
                 sender_channel_name,
                 {
                     'type': type,
-                    'sender': sender,
-                    'receiver': receiver,
+                    'sender_country_code': sender_country_code,
+                    'sender_phone_number': sender_phone_number,
+                    'receiver_country_code': receiver_country_code,
+                    'receiver_phone_number': receiver_phone_number,
                     'hash': hash,
                 }
             )
@@ -141,58 +157,70 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
                 receiver_channel_name,
                 {
                     'type': type,
-                    'sender': sender,
-                    'receiver': receiver,
+                    'sender_country_code': sender_country_code,
+                    'sender_phone_number': sender_phone_number,
+                    'receiver_country_code': receiver_country_code,
+                    'receiver_phone_number': receiver_phone_number,
                     'hash': hash,
                 }
             )
 
         elif type == 'message_delivered':
-            sender = text_data_json['sender']
-            receiver = text_data_json['receiver']
             hash = text_data_json['hash']
-            receiver_channel_name = await self.get_user_channel_name(receiver)
+
+            receiver_channel_name = await self.get_user_channel_name(
+                receiver_country_code, receiver_phone_number
+            )
 
             await self.channel_layer.send(
                 receiver_channel_name,
                 {
                     'type': type,
-                    'sender': sender,
-                    'receiver': receiver,
+                    'sender_country_code': sender_country_code,
+                    'sender_phone_number': sender_phone_number,
+                    'receiver_country_code': receiver_country_code,
+                    'receiver_phone_number': receiver_phone_number,
                     'hash': hash,
                 }
             )
 
         elif type == 'message_read':
-            sender = text_data_json['sender']
-            receiver = text_data_json['receiver']
             hash = text_data_json['hash']
-            receiver_channel_name = await self.get_user_channel_name(receiver)
+
+            receiver_channel_name = await self.get_user_channel_name(
+                receiver_country_code, receiver_phone_number
+            )
 
             await self.channel_layer.send(
                 receiver_channel_name,
                 {
                     'type': type,
-                    'sender': sender,
-                    'receiver': receiver,
+                    'sender_country_code': sender_country_code,
+                    'sender_phone_number': sender_phone_number,
+                    'receiver_country_code': receiver_country_code,
+                    'receiver_phone_number': receiver_phone_number,
                     'hash': hash,
                 }
             )
 
         elif type == 'image_message':
-            sender = text_data_json['sender']
-            receiver = text_data_json['receiver']
             image = text_data_json['image']
             timestamp = text_data_json['timestamp']
             hash = text_data_json['hash']
-            sender_channel_name = await self.get_user_channel_name(sender)
-            receiver_channel_name = await self.get_user_channel_name(receiver)
+            sender_channel_name = await self.get_user_channel_name(
+                sender_country_code, sender_phone_number
+            )
+            receiver_channel_name = await self.get_user_channel_name(
+                receiver_country_code, receiver_phone_number
+            )
             await self.channel_layer.send(
                 sender_channel_name,
                 {
                     'type': type,
-                    'sender': sender,
-                    'receiver': receiver,
+                    'sender_country_code': sender_country_code,
+                    'sender_phone_number': sender_phone_number,
+                    'receiver_country_code': receiver_country_code,
+                    'receiver_phone_number': receiver_phone_number,
                     'image': image,
                     'timestamp': timestamp,
                     'hash': hash,
@@ -203,8 +231,10 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
                 receiver_channel_name,
                 {
                     'type': type,
-                    'sender': sender,
-                    'receiver': receiver,
+                    'sender_country_code': sender_country_code,
+                    'sender_phone_number': sender_phone_number,
+                    'receiver_country_code': receiver_country_code,
+                    'receiver_phone_number': receiver_phone_number,
                     'image': image,
                     'timestamp': timestamp,
                     'hash': hash,
@@ -214,8 +244,10 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
     async def private_message(self, event):
         # Receive message from room group
         type = event['type']
-        sender = event['sender']
-        receiver = event['receiver']
+        sender_country_code = event['sender_country_code']
+        sender_phone_number = event['sender_phone_number']
+        receiver_country_code = event['receiver_country_code']
+        receiver_phone_number = event['receiver_phone_number']
         message = event['message']
         hash = event['hash']
         timestamp = event['timestamp']
@@ -223,8 +255,10 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'type': type,
-            'sender': sender,
-            'receiver': receiver,
+            'sender_country_code': sender_country_code,
+            'sender_phone_number': sender_phone_number,
+            'receiver_country_code': receiver_country_code,
+            'receiver_phone_number': receiver_phone_number,
             'message': message,
             'hash': hash,
             'timestamp': timestamp,
@@ -233,53 +267,67 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
     async def delete_private_message(self, event):
         # Receive message from room group
         type = event['type']
-        sender = event['sender']
-        receiver = event['receiver']
+        sender_country_code = event['sender_country_code']
+        sender_phone_number = event['sender_phone_number']
+        receiver_country_code = event['receiver_country_code']
+        receiver_phone_number = event['receiver_phone_number']
         hash = event['hash']
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'type': type,
-            'sender': sender,
-            'receiver': receiver,
+            'sender_country_code': sender_country_code,
+            'sender_phone_number': sender_phone_number,
+            'receiver_country_code': receiver_country_code,
+            'receiver_phone_number': receiver_phone_number,
             'hash': hash,
         }))
 
     async def message_delivered(self, event):
         # Receive message from room group
         type = event['type']
-        sender = event['sender']
-        receiver = event['receiver']
+        sender_country_code = event['sender_country_code']
+        sender_phone_number = event['sender_phone_number']
+        receiver_country_code = event['receiver_country_code']
+        receiver_phone_number = event['receiver_phone_number']
         hash = event['hash']
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'type': type,
-            'sender': sender,
-            'receiver': receiver,
+            'sender_country_code': sender_country_code,
+            'sender_phone_number': sender_phone_number,
+            'receiver_country_code': receiver_country_code,
+            'receiver_phone_number': receiver_phone_number,
             'hash': hash,
         }))
 
     async def message_read(self, event):
         # Receive message from room group
         type = event['type']
-        sender = event['sender']
-        receiver = event['receiver']
+        sender_country_code = event['sender_country_code']
+        sender_phone_number = event['sender_phone_number']
+        receiver_country_code = event['receiver_country_code']
+        receiver_phone_number = event['receiver_phone_number']
         hash = event['hash']
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'type': type,
-            'sender': sender,
-            'receiver': receiver,
+            'sender_country_code': sender_country_code,
+            'sender_phone_number': sender_phone_number,
+            'receiver_country_code': receiver_country_code,
+            'receiver_phone_number': receiver_phone_number,
             'hash': hash,
         }))
 
     async def image_message(self, event):
         # Receive message from room group
         type = event['type']
-        sender = event['sender']
-        receiver = event['receiver']
+        sender_country_code = event['sender_country_code']
+        sender_phone_number = event['sender_phone_number']
+        receiver_country_code = event['receiver_country_code']
+        receiver_phone_number = event['receiver_phone_number']
         image = event['image']
         timestamp = event['timestamp']
         hash = event['hash']
@@ -287,8 +335,10 @@ class UserAuthorizationConsumer(AsyncWebsocketConsumer):
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'type': type,
-            'sender': sender,
-            'receiver': receiver,
+            'sender_country_code': sender_country_code,
+            'sender_phone_number': sender_phone_number,
+            'receiver_country_code': receiver_country_code,
+            'receiver_phone_number': receiver_phone_number,
             'image': image,
             'timestamp': timestamp,
             'hash': hash,

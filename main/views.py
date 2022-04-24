@@ -157,7 +157,7 @@ class UserDetailsView(APIView):
             status_code = status.HTTP_406_NOT_ACCEPTABLE
         else:
             decoded: dict = jwt.decode(request.data['access_token'],
-                                       'django-insecure-#60=6k*hajinp%m=e5$mn=+gr(&g6b)+91smxi*wv+3827x5nv',
+                                       SECRET_KEY,
                                        algorithms=['HS256'])
             user: User = User.exists(pk=decoded['user_id'])
             if user:
